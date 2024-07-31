@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ZLSSettings">
+    <option name="zlsPath" value="$USER_HOME$/Devs/zls/zls-0.13.0/zig-out/bin/zls" />
+    <option name="debug" value="true" />
+    <option name="messageTrace" value="true" />
+    <option name="highlightGlobalVarDeclarations" value="true" />
+  </component>
+  <component name="ZigProjectSettings">
+    <option name="overrideStdPath" value="true" />
+    <option name="explicitPathToStd" value="/usr/lib/zig/std" />
+    <option name="toolchainHomeDirectory" value="/usr/bin" />
+  </component>
+</project>
