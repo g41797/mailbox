@@ -1,11 +1,11 @@
 //-----------------------------
-const std = @import("std");
-const builtin = @import("builtin");
-const debug = std.debug;
+const std       = @import("std");
+const builtin   = @import("builtin");
+const debug     = std.debug;
 const assert = debug.assert;
-const testing = std.testing;
+const testing   = std.testing;
 
-const Mutex = std.Thread.Mutex;
+const Mutex     = std.Thread.Mutex;
 const Condition = std.Thread.Condition;
 //-----------------------------
 
@@ -15,18 +15,18 @@ pub fn MailBox(comptime T: type) type {
 
         /// Envelope inside the linked list wrapping the actual letter.
         pub const Envelope = struct {
-            prev: ?*Envelope = null,
-            next: ?*Envelope = null,
+            prev:   ?*Envelope = null,
+            next:   ?*Envelope = null,
             letter: T,
         };
 
-        first: ?*Envelope = null,
-        last: ?*Envelope = null,
-        len: usize = 0,
-        mutex: Mutex = .{},
-        cond: Condition = .{},
+        first:  ?*Envelope = null,
+        last:   ?*Envelope = null,
+        len:    usize = 0,
+        mutex:  Mutex = .{},
+        cond:   Condition = .{},
 
-        pub fn enqueue(mbox: *Self, new_Envelope: *Envelope) void {
+        pub fn send(mbox: *Self, new_Envelope: *Envelope) void {
 
             mbox.mutex.lock();
             defer mbox.mutex.unlock();
@@ -36,7 +36,7 @@ pub fn MailBox(comptime T: type) type {
             mbox.cond.signal();
         }
 
-        pub fn dequeue(mbox: *Self, timeout_ns: u64) error{Timeout}!*Envelope {
+        pub fn receive(mbox: *Self, timeout_ns: u64) error{Timeout}!*Envelope {
 
             var timeout_timer = std.time.Timer.start() catch unreachable;
 
@@ -137,24 +137,24 @@ test "basic MailBox test" {
     const M = MailBox(u32);
     var mbox = M{};
 
-    try testing.expectError(error.Timeout, mbox.dequeue(10));
+    try testing.expectError(error.Timeout, mbox.receive(10));
 
-    var one = M.Envelope{ .letter = 1 };
-    var two = M.Envelope{ .letter = 2 };
-    var three = M.Envelope{ .letter = 3 };
-    var four = M.Envelope{ .letter = 4 };
-    var five = M.Envelope{ .letter = 5 };
+    var one     = M.Envelope{ .letter = 1 };
+    var two     = M.Envelope{ .letter = 2 };
+    var three   = M.Envelope{ .letter = 3 };
+    var four    = M.Envelope{ .letter = 4 };
+    var five    = M.Envelope{ .letter = 5 };
 
-    mbox.enqueue(&one);
-    mbox.enqueue(&two);
-    mbox.enqueue(&three);
-    mbox.enqueue(&four);
-    mbox.enqueue(&five);
+    mbox.send(&one);
+    mbox.send(&two);
+    mbox.send(&three);
+    mbox.send(&four);
+    mbox.send(&five);
 
     try testing.expect(mbox.len == 5);
 
     for (1..6) |i| {
-        const recv = mbox.dequeue(100);
+        const recv = mbox.receive(100);
 
         if ( recv ) |val| {
             try testing.expect(val.*.letter == i);
@@ -163,5 +163,5 @@ test "basic MailBox test" {
         }
     }
 
-    try testing.expectError(error.Timeout, mbox.dequeue(10));
+    try testing.expectError(error.Timeout, mbox.receive(10));
 }
