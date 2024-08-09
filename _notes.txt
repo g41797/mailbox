@@ -15,16 +15,35 @@ MAILBOXES (iRMX 86™ NUCLEUS REFERENCE MANUAL)
 Actors model
     https://en.wikipedia.org/wiki/Actor_model
     https://www.brianstorti.com/the-actor-model/
+    https://actoromicon.rs/ch03-00-actors.html#a-mailbox
+    https://actoromicon.rs/assets/mailbox.drawio.svg
+
     https://medium.com/@KtheAgent/actor-model-in-nutshell-d13c0f81c8c7
     https://stately.ai/docs/actor-model
     https://doc.akka.io/docs/akka/current/typed/guide/actors-intro.html
     https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/How-the-Actor-Model-works-by-example
+
+    https://github.com/huan/mailbox
+
+Awesome Zig
+    https://github.com/zigcc/awesome-zig
+    https://github.com/C-BJ/awesome-zig
+
+CI
+    https://github.com/kubkon/zig-yaml/blob/main/.github/workflows/ci.yml
+    https://github.com/mattnite/gyro/blob/master/.github/workflows/linux.yml
+    https://github.com/frmdstryr/zhp/blob/master/.github/workflows/ci.yml
+    https://github.com/mitchellh/libxev/blob/main/.github/workflows/test.yml
+
 
 Zig actors
     https://www.reddit.com/r/Zig/comments/1c031al/creating_an_actor_system_in_zig/
     https://github.com/hardliner66/abps/
     https://github.com/winksaville/zig-actor-model
 
+Rust actors
+    https://actoromicon.rs/ch01-00-introduction.html
+    https://github.com/elfo-rs/elfo
 
 Queue
     https://github.com/ziglang/zig/blob/master/lib/std/linked_list.zig
@@ -33,6 +52,9 @@ Queue
     http://ratfactor.com/zig/stdlib-browseable2/atomic/queue.zig.html
     https://www.openmymind.net/Writing-a-Task-Scheduler-in-Zig/
     https://github.com/fr233/LinkedBlockingQueue.zig/blob/main/LinkedBlockingQueue.zig
+
+std: remove atomic.Queue
+    https://github.com/ziglang/zig/pull/18085/commits/edb2f72988cd180c5d87b03481fa1c20b3325968
 
 Example of project
     https://github.com/riverwm/river
