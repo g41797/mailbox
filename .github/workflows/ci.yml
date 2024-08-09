@@ -24,4 +24,4 @@ jobs:
           version: master
           cache: false
 
-      - run: zig test src/*.zig
+      - run: zig test src/mailbox.zig
