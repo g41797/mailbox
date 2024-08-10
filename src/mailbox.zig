@@ -55,7 +55,7 @@ pub fn MailBox(comptime T: type) type {
             const last = mbox.last;
 
             if (mbox.len > 0) {
-                mbox.cond.signal();
+                defer mbox.cond.signal();
             }
 
             if (last) |lastEnvelope| {

@@ -44,6 +44,11 @@ Zig actors
 Rust actors
     https://actoromicon.rs/ch01-00-introduction.html
     https://github.com/elfo-rs/elfo
+    https://actix.rs/docs/actix/actor
+    https://www.bastion-rs.com/
+
+C actors
+    https://github.com/FedeDP/libmodule
 
 Queue
     https://github.com/ziglang/zig/blob/master/lib/std/linked_list.zig
@@ -58,3 +63,16 @@ std: remove atomic.Queue
 
 Example of project
     https://github.com/riverwm/river
+
+Zig Common Tasks
+    https://renatoathaydes.github.io/zig-common-tasks/
+
+"Interfaces"
+    https://zig.news/yglcode/code-study-interface-idiomspatterns-in-zig-standard-libraries-4lkj
+    https://zig.news/kilianvounckx/zig-interfaces-for-the-uninitiated-an-update-4gf1
+    https://zig.news/kristoff/easy-interfaces-with-zig-0100-2hc5
+    https://zig.news/akhildevelops/learning-interfaces-by-implementing-iterator-in-zig-3do1
+    https://ethanfrei.com/posts/zig-interfaces.html
+    https://github.com/alexnask/interface.zig
+    https://www.youtube.com/watch?v=AHc4x1uXBQE
+    https://revivalizer.xyz/post/the-missing-zig-polymorphism-reference/
