@@ -2,7 +2,7 @@
 const std       = @import("std");
 const builtin   = @import("builtin");
 const debug     = std.debug;
-const assert = debug.assert;
+const assert    = debug.assert;
 const testing   = std.testing;
 
 const Mutex     = std.Thread.Mutex;
@@ -13,7 +13,7 @@ pub fn MailBox(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        /// Envelope inside the linked list wrapping the actual letter.
+        /// Envelope inside FIFO wrapping the actual letter.
         pub const Envelope = struct {
             prev:   ?*Envelope = null,
             next:   ?*Envelope = null,
@@ -26,16 +26,23 @@ pub fn MailBox(comptime T: type) type {
         mutex:  Mutex = .{},
         cond:   Condition = .{},
 
+        /// Append a new Envelope to the tail
+        /// and wake-up waiting on receive threads.
+        /// Arguments:
+        ///     new_Envelope: Pointer to the new Envelope to append.
         pub fn send(mbox: *Self, new_Envelope: *Envelope) void {
 
             mbox.mutex.lock();
             defer mbox.mutex.unlock();
 
-            mbox.push(new_Envelope);
+            mbox.enqueue(new_Envelope);
 
             mbox.cond.signal();
         }
 
+        /// Blocks thread  maximum timeout_ns till Envelope in head of FIFO will be available.
+        /// If not available - returns error.Timeout.
+        /// Otherwise removes Envelope from the head and returns it to the caller.
         pub fn receive(mbox: *Self, timeout_ns: u64) error{Timeout}!*Envelope {
 
             var timeout_timer = std.time.Timer.start() catch unreachable;
@@ -52,84 +59,56 @@ pub fn MailBox(comptime T: type) type {
                 try mbox.cond.timedWait(&mbox.mutex, local_timeout_ns);
             }
 
-            const last = mbox.last;
+            const first = mbox.dequeue();
 
-            if (mbox.len > 0) {
+            if (first) |firstEnvelope| {
                 defer mbox.cond.signal();
-            }
-
-            if (last) |lastEnvelope| {
-                    mbox.remove(lastEnvelope);
-                    return lastEnvelope;
+                return firstEnvelope;
             } else {
                 return error.Timeout;
             }
         }
 
-        /// Insert a new Envelope at the beginning of the list.
-        ///
-        /// Arguments:
-        ///     new_Envelope: Pointer to the new Envelope to insert.
-        fn push(list: *Self, new_Envelope: *Envelope) void {
-            if (list.first) |first| {
-                // Insert before first.
-                list.insertBefore(first, new_Envelope);
-            } else {
-                // Empty list.
-                list.first = new_Envelope;
-                list.last = new_Envelope;
-                new_Envelope.prev = null;
-                new_Envelope.next = null;
+        fn enqueue(fifo: *Self, new_Envelope: *Envelope) void {
 
-                list.len = 1;
+            new_Envelope.prev   = null;
+            new_Envelope.next   = null;
+
+            if (fifo.last) |last| {
+                last.next           = new_Envelope;
+                new_Envelope.prev   = last;
+            } else {
+                fifo.first  = new_Envelope;
             }
+
+            fifo.last   = new_Envelope;
+            fifo.len    += 1;
+
+            return;
         }
 
-        /// Remove a Envelope from the list.
-        ///
-        /// Arguments:
-        ///     Envelope: Pointer to the Envelope to be removed.
-        fn remove(list: *Self, envelope: *Envelope) void {
-            if (envelope.prev) |prev_Envelope| {
-                // Intermediate Envelope.
-                prev_Envelope.next = envelope.next;
-            } else {
-                // First element of the list.
-                list.first = envelope.next;
+        fn dequeue(fifo: *Self) ?*Envelope {
+
+            if (fifo.len == 0) {
+                return null;
             }
 
-            if (envelope.next) |next_Envelope| {
-                // Intermediate Envelope.
-                next_Envelope.prev = envelope.prev;
+            var result  = fifo.first;
+            fifo.first  = result.?.next;
+
+            if (fifo.len == 1) {
+                fifo.last   = null;
             } else {
-                // Last element of the list.
-                list.last = envelope.prev;
+                fifo.first.?.prev = fifo.first;
             }
 
-            list.len -= 1;
-            assert(list.len == 0 or (list.first != null and list.last != null));
+            result.?.prev     = null;
+            result.?.next     = null;
+            fifo.len        -= 1;
+
+            return result;
         }
 
-        /// Insert a new Envelope before an existing one.
-        ///
-        /// Arguments:
-        ///     Envelope: Pointer to a Envelope in the list.
-        ///     new_Envelope: Pointer to the new Envelope to insert.
-        fn insertBefore(list: *Self, envelope: *Envelope, new_Envelope: *Envelope) void {
-            new_Envelope.next = envelope;
-            if (envelope.prev) |prev_Envelope| {
-                // Intermediate Envelope.
-                new_Envelope.prev = prev_Envelope;
-                prev_Envelope.next = new_Envelope;
-            } else {
-                // First element of the list.
-                new_Envelope.prev = null;
-                list.first = new_Envelope;
-            }
-            envelope.prev = new_Envelope;
-
-            list.len += 1;
-        }
     };
 }
 
