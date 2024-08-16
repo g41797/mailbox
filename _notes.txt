@@ -58,6 +58,9 @@ Queue
     https://www.openmymind.net/Writing-a-Task-Scheduler-in-Zig/
     https://github.com/fr233/LinkedBlockingQueue.zig/blob/main/LinkedBlockingQueue.zig
 
+    An intrusive queue:
+    https://github.com/mitchellh/libxev/blob/main/src/queue.zig
+
 std: remove atomic.Queue
     https://github.com/ziglang/zig/pull/18085/commits/edb2f72988cd180c5d87b03481fa1c20b3325968
 
@@ -76,3 +79,5 @@ Zig Common Tasks
     https://github.com/alexnask/interface.zig
     https://www.youtube.com/watch?v=AHc4x1uXBQE
     https://revivalizer.xyz/post/the-missing-zig-polymorphism-reference/
+    https://github.com/mitchellh/libxev/blob/main/src/queue.zig
+
