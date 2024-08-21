@@ -10,7 +10,7 @@ MAILBOXES (iRMX 86™ NUCLEUS REFERENCE MANUAL)
     blank, and sending it might constitute a signal to the waiting task.
     Another reason to send an object might be to point out the object to the
     receiving task.
-        http://bitsavers.informatik.uni-stuttgart.de/pdf/intel/iRMX/iRMX_86_Rev_3_May_1981/9803122-03_iRMX_86_Nucleus_Reference_May81.pdf
+                        http://bitsavers.informatik.uni-stuttgart.de/pdf/intel/iRMX/iRMX_86_Rev_3_May_1981/9803122-03_iRMX_86_Nucleus_Reference_May81.pdf
 
 Actors model
     https://en.wikipedia.org/wiki/Actor_model
