@@ -23,6 +23,7 @@ pub fn MailBox(comptime T: type) type {
         first:  ?*Envelope = null,
         last:   ?*Envelope = null,
         len:    usize = 0,
+        closed: bool = false,
         mutex:  Mutex = .{},
         cond:   Condition = .{},
 
@@ -30,10 +31,13 @@ pub fn MailBox(comptime T: type) type {
         /// and wake-up waiting on receive threads.
         /// Arguments:
         ///     new_Envelope: Pointer to the new Envelope to append.
-        pub fn send(mbox: *Self, new_Envelope: *Envelope) void {
+        /// If mailbox was closed - returns error.Closed
+        pub fn send(mbox: *Self, new_Envelope: *Envelope) error{Closed}!void {
 
             mbox.mutex.lock();
             defer mbox.mutex.unlock();
+
+            if(mbox.closed) {return error.Closed;}
 
             mbox.enqueue(new_Envelope);
 
@@ -43,12 +47,15 @@ pub fn MailBox(comptime T: type) type {
         /// Blocks thread  maximum timeout_ns till Envelope in head of FIFO will be available.
         /// If not available - returns error.Timeout.
         /// Otherwise removes Envelope from the head and returns it to the caller.
-        pub fn receive(mbox: *Self, timeout_ns: u64) error{Timeout}!*Envelope {
+        /// If mailbox was closed - returns error.Closed
+        pub fn receive(mbox: *Self, timeout_ns: u64) error{Timeout, Closed}!*Envelope {
 
             var timeout_timer = std.time.Timer.start() catch unreachable;
 
             mbox.mutex.lock();
             defer mbox.mutex.unlock();
+
+            if(mbox.closed) {return error.Closed;}
 
             while (mbox.len == 0) {
                 const elapsed = timeout_timer.read();
@@ -67,6 +74,24 @@ pub fn MailBox(comptime T: type) type {
             } else {
                 return error.Timeout;
             }
+        }
+
+        /// First close disabled further client calls and returns head of Envelopes
+        /// for de-allocation
+        pub fn close(mbox: *Self) error{Closed}!?*Envelope {
+
+            mbox.mutex.lock();
+            defer mbox.mutex.unlock();
+
+            if(mbox.closed) {return error.Closed;}
+
+            mbox.closed = true;
+
+            const head = mbox.first;
+
+            mbox.first = null;
+
+            return head;
         }
 
         fn enqueue(fifo: *Self, new_Envelope: *Envelope) void {
@@ -124,11 +149,11 @@ test "basic MailBox test" {
     var four    = M.Envelope{ .letter = 4 };
     var five    = M.Envelope{ .letter = 5 };
 
-    mbox.send(&one);
-    mbox.send(&two);
-    mbox.send(&three);
-    mbox.send(&four);
-    mbox.send(&five);
+    try mbox.send(&one);
+    try mbox.send(&two);
+    try mbox.send(&three);
+    try mbox.send(&four);
+    try mbox.send(&five);
 
     try testing.expect(mbox.len == 5);
 
@@ -143,4 +168,7 @@ test "basic MailBox test" {
     }
 
     try testing.expectError(error.Timeout, mbox.receive(10));
+
+    _ = try mbox.close();
+    try testing.expectError(error.Closed, mbox.receive(10));
 }
