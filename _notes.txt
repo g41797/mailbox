@@ -81,3 +81,5 @@ Zig Common Tasks
     https://revivalizer.xyz/post/the-missing-zig-polymorphism-reference/
     https://github.com/mitchellh/libxev/blob/main/src/queue.zig
 
+Functions
+    https://gencmurat.com/en/posts/mastering-functions-in-zig/

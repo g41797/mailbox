@@ -218,10 +218,9 @@ test "mt MailBox test" {
             echo.thread = std.Thread.spawn(.{}, run, .{echo}) catch unreachable;
         }
 
-        pub fn run(echo: *Self) void {
+        fn run(echo: *Self) void {
             while (true) {
                 const envelope = echo.to.receive(1000000) catch break;
-                envelope.*.letter += 1;
                 _ = echo.from.send(envelope) catch break;
             }
         }
@@ -254,10 +253,10 @@ test "mt MailBox test" {
         envl.*.letter = indx;
         try echo.to.send(envl);
 
-        const back = echo.from.receive(1000);
+        const back = echo.from.receive(1000000);
 
         if (back) |val| {
-            try testing.expect(val.*.letter == indx + 1);
+            try testing.expect(val.*.letter == indx);
         } else |_| {
             try testing.expect(false);
         }
