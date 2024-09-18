@@ -7,6 +7,7 @@ const testing = std.testing;
 
 const Mutex = std.Thread.Mutex;
 const Condition = std.Thread.Condition;
+const Thread = std.Thread;
 //-----------------------------
 
 pub fn MailBox(comptime T: type) type {
@@ -152,18 +153,26 @@ pub fn MailBox(comptime T: type) type {
         }
     };
 }
+//-----------------------------
 
+//-----------------------------
+test {
+    @import("std").testing.refAllDecls(@This());
+}
+//-----------------------------
+
+//-----------------------------
 test "basic MailBox test" {
-    const M = MailBox(u32);
-    var mbox = M.open();
+    const Mb = MailBox(u32);
+    var mbox = Mb.open();
 
     try testing.expectError(error.Timeout, mbox.receive(10));
 
-    var one = M.Envelope{ .letter = 1 };
-    var two = M.Envelope{ .letter = 2 };
-    var three = M.Envelope{ .letter = 3 };
-    var four = M.Envelope{ .letter = 4 };
-    var five = M.Envelope{ .letter = 5 };
+    var one = Mb.Envelope{ .letter = 1 };
+    var two = Mb.Envelope{ .letter = 2 };
+    var three = Mb.Envelope{ .letter = 3 };
+    var four = Mb.Envelope{ .letter = 4 };
+    var five = Mb.Envelope{ .letter = 5 };
 
     try mbox.send(&one);
     try mbox.send(&two);
@@ -174,7 +183,7 @@ test "basic MailBox test" {
     try testing.expect(mbox.letters() == 5);
 
     for (1..6) |i| {
-        const recv = mbox.receive(100);
+        const recv = mbox.receive(1000);
 
         if (recv) |val| {
             try testing.expect(val.*.letter == i);
@@ -188,3 +197,71 @@ test "basic MailBox test" {
     _ = try mbox.close();
     try testing.expectError(error.Closed, mbox.receive(10));
 }
+//-----------------------------
+
+//-----------------------------
+test "mt MailBox test" {
+
+    //-----------------------------
+    const M = MailBox(usize);
+
+    const Echo = struct {
+        const Self = @This();
+
+        to: M = undefined,
+        from: M = undefined,
+        thread: Thread = undefined,
+
+        pub fn start(echo: *Self) void {
+            echo.to = M.open();
+            echo.from = M.open();
+            echo.thread = std.Thread.spawn(.{}, run, .{echo}) catch unreachable;
+        }
+
+        pub fn run(echo: *Self) void {
+            while (true) {
+                const envelope = echo.to.receive(1000000) catch break;
+                envelope.*.letter += 1;
+                _ = echo.from.send(envelope) catch break;
+            }
+        }
+
+        pub fn waitFinish(echo: *Self) void {
+            echo.thread.join();
+        }
+
+        pub fn stop(echo: *Self) !void {
+            _ = try echo.to.close();
+            _ = try echo.from.close();
+        }
+    };
+    //-----------------------------
+
+    var echo = try std.testing.allocator.create(Echo);
+
+    echo.start();
+    defer {
+        echo.waitFinish();
+        std.testing.allocator.destroy(echo);
+    }
+
+    try testing.expectError(error.Timeout, echo.from.receive(100));
+
+    const envl = try std.testing.allocator.create(M.Envelope);
+    defer std.testing.allocator.destroy(envl);
+
+    for (0..6) |indx| {
+        envl.*.letter = indx;
+        try echo.to.send(envl);
+
+        const back = echo.from.receive(1000);
+
+        if (back) |val| {
+            try testing.expect(val.*.letter == indx + 1);
+        } else |_| {
+            try testing.expect(false);
+        }
+    }
+    try echo.stop();
+}
+//-----------------------------
