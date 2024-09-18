@@ -23,9 +23,16 @@ pub fn MailBox(comptime T: type) type {
         first: ?*Envelope = null,
         last: ?*Envelope = null,
         len: usize = 0,
-        closed: bool = false,
+        closed: bool = true,
         mutex: Mutex = .{},
         cond: Condition = .{},
+
+        /// Set mailbox to ready mode
+        pub fn open() Self { // Add alloc: std.mem.Allocator
+            return Self{
+                .closed = false,
+            };
+        }
 
         /// Append a new Envelope to the tail
         /// and wake-up waiting on receive threads.
@@ -76,6 +83,15 @@ pub fn MailBox(comptime T: type) type {
             } else {
                 return error.Timeout;
             }
+        }
+
+        /// # of letters in internal queue.
+        /// May be called also on closed mailbox.
+        pub fn letters(mbox: *Self) usize {
+            mbox.mutex.lock();
+            defer mbox.mutex.unlock();
+
+            return mbox.len;
         }
 
         /// First close disabled further client calls and returns head of Envelopes
@@ -139,7 +155,7 @@ pub fn MailBox(comptime T: type) type {
 
 test "basic MailBox test" {
     const M = MailBox(u32);
-    var mbox = M{};
+    var mbox = M.open();
 
     try testing.expectError(error.Timeout, mbox.receive(10));
 
@@ -155,7 +171,7 @@ test "basic MailBox test" {
     try mbox.send(&four);
     try mbox.send(&five);
 
-    try testing.expect(mbox.len == 5);
+    try testing.expect(mbox.letters() == 5);
 
     for (1..6) |i| {
         const recv = mbox.receive(100);
