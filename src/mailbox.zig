@@ -64,11 +64,12 @@ pub fn MailBox(comptime T: type) type {
             mbox.mutex.lock();
             defer mbox.mutex.unlock();
 
-            if (mbox.closed) {
-                return error.Closed;
-            }
-
             while (mbox.len == 0) {
+
+                if (mbox.closed) {
+                    return error.Closed;
+                }
+
                 const elapsed = timeout_timer.read();
                 if (elapsed > timeout_ns)
                     return error.Timeout;
