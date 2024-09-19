@@ -42,8 +42,7 @@ Since than I have used it in:
 
 **Now it's time for Zig**
 
-
-## Example of Echo actor
+## Example of Echo actor(Thread + Mailbox)
 
 ```zig
     // Mbx is Mailbox with usize letter(data)
