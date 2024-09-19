@@ -145,11 +145,13 @@ Since than I have used it in:
 ## Installation
 
 Add dependency to build.zig.zon:
-   >zig fetch --save-exact  https://github.com/g41797/mailbox/archive/master.tar.gz
+```bash
+zig fetch --save-exact  https://github.com/g41797/mailbox/archive/master.tar.gz
+```
 
 Add to build.zig:
 ```zig
-    exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
+exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
 ```
 
 ## Contributing
