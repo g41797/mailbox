@@ -43,13 +43,13 @@ Since than I have used it in:
 **Now it's time for Zig**
 
 
-## Example of in-proc Echo "server"
+## Example of Echo actor
 
 ```zig
     // Mbx is Mailbox with usize letter(data)
     const Mbx = MailBox(usize);
 
-    // Echo "server" - runs on own thread
+    // Echo actor - runs on own thread
     // Receives letter via 'TO' mailbox
     // Send letter without change (echo) to "FROM" mailbox
     // "TO"/"FROM" - from the client point of the view
@@ -84,7 +84,7 @@ Since than I have used it in:
         }
 
         // Close mailboxes
-        // As result Echo "server" should stop processing
+        // As result Echo actor should stop processing
         // and exit from the thread.
         pub fn stop(echo: *Self) !void {
             _ = try echo.to.close();
@@ -95,7 +95,7 @@ Since than I have used it in:
     // Echo "client" code:
     var echo = try std.testing.allocator.create(Echo);
 
-    // Start Echo "server" on own thread
+    // Start Echo actor on own thread
     echo.start();
 
     defer {
@@ -131,7 +131,7 @@ Since than I have used it in:
         }
     }
 
-    // Stop Echo "server"
+    // Stop Echo actor
     try echo.stop();
 }
 //  defered:

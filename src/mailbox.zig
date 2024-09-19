@@ -208,12 +208,12 @@ test "basic MailBox test" {
 //-----------------------------
 
 //-----------------------------
-test "Echo server based on mailboxes test" {
+test "Echo actor based on mailboxes test" {
 
     // Mbx is Mailbox with usize letter(data)
     const Mbx = MailBox(usize);
 
-    // Echo "server" - runs on own thread
+    // Echo actor - runs on own thread
     // Receives letter via 'TO' mailbox
     // Send letter without change (echo) to "FROM" mailbox
     // "TO"/"FROM" - from the client point of the view
@@ -248,7 +248,7 @@ test "Echo server based on mailboxes test" {
         }
 
         // Close mailboxes
-        // As result Echo "server" should stop processing
+        // As result Echo actor should stop processing
         // and exit from the thread.
         pub fn stop(echo: *Self) !void {
             _ = try echo.to.close();
@@ -259,7 +259,7 @@ test "Echo server based on mailboxes test" {
 
     var echo = try std.testing.allocator.create(Echo);
 
-    // Start Echo "server" on own thread
+    // Start Echo actor on own thread
     echo.start();
 
     defer {
@@ -295,7 +295,7 @@ test "Echo server based on mailboxes test" {
         }
     }
 
-    // Stop Echo "server"
+    // Stop Echo actor
     try echo.stop();
 }
 //  defered:
