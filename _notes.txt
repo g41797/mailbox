@@ -83,3 +83,11 @@ Zig Common Tasks
 
 Functions
     https://gencmurat.com/en/posts/mastering-functions-in-zig/
+
+Install
+
+    Add dependency to build.zig.zon:
+        zig fetch --save-exact  https://github.com/g41797/mailbox/archive/master.tar.gz
+
+    build.zig:
+        exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));

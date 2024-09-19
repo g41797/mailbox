@@ -92,7 +92,7 @@ Since than I have used it in:
         }
     };
 
-    // Echo "client"
+    // Echo "client" code:
     var echo = try std.testing.allocator.create(Echo);
 
     // Start Echo "server" on own thread
@@ -104,7 +104,7 @@ Since than I have used it in:
         std.testing.allocator.destroy(echo);
     }
 
-    // because nothing was send to 'TO' mailbox, nothing should be receiced
+    // because nothing was send to 'TO' mailbox, nothing should be received
     // from 'FROM' mailbox
     try testing.expectError(error.Timeout, echo.from.receive(100));
 
@@ -141,3 +141,16 @@ Since than I have used it in:
 //          std.testing.allocator.destroy(echo);
 //          std.testing.allocator.destroy(envl);
 ```
+
+## Installation
+
+Add dependency to build.zig.zon:
+   >zig fetch --save-exact  https://github.com/g41797/mailbox/archive/master.tar.gz
+
+Add to build.zig:
+```zig
+    exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
+```
+
+
+

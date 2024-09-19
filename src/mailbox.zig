@@ -267,7 +267,7 @@ test "Echo server based on mailboxes test" {
         std.testing.allocator.destroy(echo);
     }
 
-    // because nothing was send to 'TO' mailbox, nothing should be receiced
+    // because nothing was send to 'TO' mailbox, nothing should be received
     // from 'FROM' mailbox
     try testing.expectError(error.Timeout, echo.from.receive(100));
 
