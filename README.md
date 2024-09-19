@@ -152,5 +152,14 @@ Add to build.zig:
     exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
 ```
 
+## Contributing
+
+Feel free to report bugs and suggest improvements.
+
+## License
+
+[MIT](LICENSE)
+
+
 
 
