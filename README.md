@@ -1,6 +1,6 @@
 ![](_logo/mailboxes.png)
 
-# An implementation of Mailbox abstraction in Zig          
+# Mailbox - the best way for inter-thread communication.          
 
 [![CI](https://github.com/g41797/yazq/actions/workflows/ci.yml/badge.svg)](https://github.com/g41797/yazq/actions/workflows/ci.yml)
 
