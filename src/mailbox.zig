@@ -11,7 +11,7 @@ const Mutex = std.Thread.Mutex;
 const Condition = std.Thread.Condition;
 const Thread = std.Thread;
 
-pub fn MailBox(comptime T: type) type {
+pub fn MailBox(comptime Letter: type) type {
     return struct {
         const Self = @This();
 
@@ -19,22 +19,15 @@ pub fn MailBox(comptime T: type) type {
         pub const Envelope = struct {
             prev: ?*Envelope = null,
             next: ?*Envelope = null,
-            letter: T,
+            letter: Letter,
         };
 
         first: ?*Envelope = null,
         last: ?*Envelope = null,
         len: usize = 0,
-        closed: bool = true,
+        closed: bool = false,
         mutex: Mutex = .{},
         cond: Condition = .{},
-
-        /// Set mailbox to ready mode
-        pub fn open() Self { // Add alloc: std.mem.Allocator
-            return Self{
-                .closed = false,
-            };
-        }
 
         /// Append a new Envelope to the tail
         /// and wake-up waiting on receive threads.
@@ -65,7 +58,6 @@ pub fn MailBox(comptime T: type) type {
             defer mbox.mutex.unlock();
 
             while (mbox.len == 0) {
-
                 if (mbox.closed) {
                     return error.Closed;
                 }
@@ -172,7 +164,7 @@ test {
 //-----------------------------
 test "basic MailBox test" {
     const Mbx = MailBox(u32);
-    var mbox = Mbx.open();
+    var mbox: Mbx = .{};
 
     try testing.expectError(error.Timeout, mbox.receive(10));
 
@@ -208,15 +200,16 @@ test "basic MailBox test" {
 //-----------------------------
 
 //-----------------------------
-test "Echo actor based on mailboxes test" {
+test "Echo mailboxes test" {
 
     // Mbx is Mailbox with usize letter(data)
     const Mbx = MailBox(usize);
 
-    // Echo actor - runs on own thread
+    // Echo - runs on own thread
+    // It has two mailboxes
+    // "TO" and "FROM" - from the client point of the view
     // Receives letter via 'TO' mailbox
-    // Send letter without change (echo) to "FROM" mailbox
-    // "TO"/"FROM" - from the client point of the view
+    // Replies letter without change (echo) to "FROM" mailbox
     const Echo = struct {
         const Self = @This();
 
@@ -225,19 +218,22 @@ test "Echo actor based on mailboxes test" {
         thread: Thread = undefined,
 
         // Mailboxes creation and start of the thread
+        // Pay attention, that client code does not use
+        // any thread "API" - all embedded within Echo
         pub fn start(echo: *Self) void {
-            echo.to = Mbx.open();
-            echo.from = Mbx.open();
+            echo.to = .{};
+            echo.from = .{};
             echo.thread = std.Thread.spawn(.{}, run, .{echo}) catch unreachable;
         }
 
-        // Thread function
+        // Echo thread function
         fn run(echo: *Self) void {
             // Main loop:
             while (true) {
                 // Receive - exit from the thread if mailbox was closed
                 const envelope = echo.to.receive(100000000) catch break;
-                // Send  - exit from the thread if mailbox was closed
+                // Reply to the client
+                // Exit from the thread if mailbox was closed
                 _ = echo.from.send(envelope) catch break;
             }
         }
@@ -248,7 +244,7 @@ test "Echo actor based on mailboxes test" {
         }
 
         // Close mailboxes
-        // As result Echo actor should stop processing
+        // As result Echo should stop processing
         // and exit from the thread.
         pub fn stop(echo: *Self) !void {
             _ = try echo.to.close();
@@ -256,14 +252,13 @@ test "Echo actor based on mailboxes test" {
         }
     };
 
-
     var echo = try std.testing.allocator.create(Echo);
 
-    // Start Echo actor on own thread
+    // Start Echo(on own thread)
     echo.start();
 
     defer {
-        // Wait finish of the thread
+        // Wait finish of Echo
         echo.waitFinish();
         std.testing.allocator.destroy(echo);
     }
@@ -295,11 +290,11 @@ test "Echo actor based on mailboxes test" {
         }
     }
 
-    // Stop Echo actor
+    // Stop Echo
     try echo.stop();
 }
 //  defered:
-//      Wait finish of the thread
+//      Wait finish of Echo
 //          echo.waitFinish();
 //      Free allocated memory:
 //          std.testing.allocator.destroy(echo);

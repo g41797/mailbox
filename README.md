@@ -4,34 +4,19 @@
 
 [![CI](https://github.com/g41797/yazq/actions/workflows/ci.yml/badge.svg)](https://github.com/g41797/yazq/actions/workflows/ci.yml)
 
-> Mailboxes are one of the fundamental parts of the [actor model originated in **1973**](https://en.wikipedia.org/wiki/Actor_model). 
->
-> Through the mailbox mechanism, actors can decouple the reception of a message from its elaboration.
->
+## A bit of history, a bit of theory
+
+Mailboxes are one of the fundamental parts of the [actor model originated in **1973**](https://en.wikipedia.org/wiki/Actor_model): 
 > An actor is an object that carries out its actions in response to communications it receives.
->
+> Through the mailbox mechanism, actors can decouple the reception of a message from its elaboration.
 > A mailbox is nothing more than the data structure (FIFO) that holds messages.
->
-> If you send 3 messages to the same actor, it will just execute one at a time.
-
-Useful links for interested:
-- [Huan Mailbox](https://github.com/huan/mailbox)
-- [Typed Mailboxes in Scala](https://www.baeldung.com/scala/typed-mailboxes)
-- [Actors have mailboxes](https://www.brianstorti.com/the-actor-model/)
-
 
 I first encountered MailBox in the late 80s while working om a real-time system: 
-
-> "A **mailbox** is one of two types of objects that can be used for intertask
+> "A **mailbox** is object that can be used for inter-task
 communication. When task A wants to send an object to task B, task A
 must send the object to the mailbox, and task B must visit the mailbox,
-where, if an object isn't there, it has the option of waiting for any
-desired length of time. Sending an object in this manner can achieve
-various purposes. The object might be a segment that contains data
-needed by the waiting task. On the other hand, the segment might be
-blank, and sending it might constitute a signal to the waiting task.
-Another reason to send an object might be to point out the object to the
-receiving task." 
+where, if an object isn't there, it has the option of *waiting for any
+desired length of time*..." 
 > **iRMX 86™ NUCLEUS REFERENCE MANUAL** _Copyright @ 1980, 1981 Intel Corporation.
 
 Since than I have used it in:
@@ -40,18 +25,28 @@ Since than I have used it in:
 - Windows   - *C++/C#*
 - Linux     - *Golang*
 
-**Now it's time for Zig**
+**Now it's Zig time**
 
-## Example of Echo actor(Thread + Mailbox)
+## Why?
+If your thread runs in "Fire and Forget" mode, you don't need Mailbox.
+But in the real multithreaded application, threads communicate with each other as
+members of work team.
 
+**Mailbox** provides convenient and simple communication mechanism.
+Just try:
+- without it
+- with it
+
+## Example of usage - 'Echo' 
 ```zig
     // Mbx is Mailbox with usize letter(data)
     const Mbx = MailBox(usize);
 
-    // Echo actor - runs on own thread
+    // Echo - runs on own thread
+    // It has two mailboxes
+    // "TO" and "FROM" - from the client point of the view
     // Receives letter via 'TO' mailbox
-    // Send letter without change (echo) to "FROM" mailbox
-    // "TO"/"FROM" - from the client point of the view
+    // Replies letter without change (echo) to "FROM" mailbox
     const Echo = struct {
         const Self = @This();
 
@@ -60,19 +55,22 @@ Since than I have used it in:
         thread: Thread = undefined,
 
         // Mailboxes creation and start of the thread
+        // Pay attention, that client code does not use
+        // any thread "API" - all embedded within Echo
         pub fn start(echo: *Self) void {
-            echo.to = Mbx.open();
-            echo.from = Mbx.open();
+            echo.to = .{};
+            echo.from = .{};
             echo.thread = std.Thread.spawn(.{}, run, .{echo}) catch unreachable;
         }
 
-        // Thread function
+        // Echo thread function
         fn run(echo: *Self) void {
             // Main loop:
             while (true) {
                 // Receive - exit from the thread if mailbox was closed
                 const envelope = echo.to.receive(100000000) catch break;
-                // Send  - exit from the thread if mailbox was closed
+                // Reply to the client
+                // Exit from the thread if mailbox was closed
                 _ = echo.from.send(envelope) catch break;
             }
         }
@@ -83,7 +81,7 @@ Since than I have used it in:
         }
 
         // Close mailboxes
-        // As result Echo actor should stop processing
+        // As result Echo should stop processing
         // and exit from the thread.
         pub fn stop(echo: *Self) !void {
             _ = try echo.to.close();
@@ -91,14 +89,13 @@ Since than I have used it in:
         }
     };
 
-    // Echo "client" code:
     var echo = try std.testing.allocator.create(Echo);
 
-    // Start Echo actor on own thread
+    // Start Echo(on own thread)
     echo.start();
 
     defer {
-        // Wait finish of the thread
+        // Wait finish of Echo
         echo.waitFinish();
         std.testing.allocator.destroy(echo);
     }
@@ -130,36 +127,59 @@ Since than I have used it in:
         }
     }
 
-    // Stop Echo actor
+    // Stop Echo
     try echo.stop();
-}
-//  defered:
-//      Wait finish of the thread
-//          echo.waitFinish();
-//      Free allocated memory:
-//          std.testing.allocator.destroy(echo);
-//          std.testing.allocator.destroy(envl);
 ```
 
-## Installation
+## Boring details
 
-Add dependency to build.zig.zon:
+Mailbox of *[]const u8* 'Letters':
+```zig
+const Rumors = MailBox([]const u8);
+const rmrsMbx : Rumors = .{};
+```
+
+**Envelope** is wrapper of actual user defined type **Letter**.
+```zig
+        pub const Envelope = struct {
+            prev: ?*Envelope = null,
+            next: ?*Envelope = null,
+            letter: Letter,
+        };
+```
+In fact Mailbox is queue(FIFO) of Envelope(s).
+
+MailBox supports following operations:
+- send *Envelope* to MailBox (*enqueue*) and wakeup waiting receivers
+- receive *Envelope* from Mailbox (*dequeue*) with time-out
+- close Mailbox:
+  - disables further operations
+  - first close returns List of non-processed *Envelope(s)* for free/reuse etc.
+
+Feel free to suggest improvements in doc and code.
+
+
+
+## License
+[MIT](LICENSE)
+
+## Installation
+You finally got to installation:
+- add dependency to build.zig.zon
 ```bash
 zig fetch --save-exact  https://github.com/g41797/mailbox/archive/master.tar.gz
 ```
-
-Add to build.zig:
+- add to build.zig:
 ```zig
 exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
 ```
 
-## Contributing
+**Stop reading and start playing!**
 
-Feel free to report bugs and suggest improvements.
-
-## License
-
-[MIT](LICENSE)
+## Last warning
+First rule of multithreading:
+>**If you can do without multithreading - do without.**
+ 
 
 
 
