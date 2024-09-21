@@ -184,7 +184,7 @@ test "basic MailBox test" {
         const recv = mbox.receive(1000);
 
         if (recv) |val| {
-            try testing.expect(val.*.letter == i);
+            try testing.expect(val.letter == i);
         } else |_| {
             try testing.expect(false);
         }
@@ -272,7 +272,7 @@ test "Echo mailboxes test" {
     // Send/Receive loop
     for (0..6) |indx| {
         // Set value for send [0-5]
-        envl.*.letter = indx;
+        envl.letter = indx;
 
         // Send to 'TO' mailbox
         try echo.to.send(envl);
@@ -282,7 +282,7 @@ test "Echo mailboxes test" {
 
         if (back) |val| {
             // Expected value == index [0-5]
-            try testing.expect(val.*.letter == indx);
+            try testing.expect(val.letter == indx);
         } else |_| {
             try testing.expect(false);
         }
