@@ -29,10 +29,10 @@ Since than I have used it in:
 
 ## Why?
 If your thread runs in "Fire and Forget" mode, you don't need Mailbox.
-But in the real multithreaded application, threads communicate with each other as
-members of work team.
+But in real multithreaded applications, threads communicate with each other as
+members of a work team.
 
-**Mailbox** provides convenient and simple communication mechanism.
+**Mailbox** provides a convenient and simple communication mechanism.
  
 Just try:
 - without it
@@ -85,8 +85,8 @@ Just try:
         // As result Echo should stop processing
         // and exit from the thread.
         pub fn stop(echo: *Self) !void {
-            _ = try echo.to.close();
-            _ = try echo.from.close();
+            _ = echo.to.close();
+            _ = echo.from.close();
         }
     };
 
@@ -94,6 +94,7 @@ Just try:
 
     // Start Echo(on own thread)
     echo.start();
+    defer echo.stop();
 
     defer {
         // Wait finish of Echo
@@ -112,7 +113,7 @@ Just try:
     // Send/Receive loop
     for (0..6) |indx| {
         // Set value for send [0-5]
-        envl.*.letter = indx;
+        envl.letter = indx;
 
         // Send to 'TO' mailbox
         try echo.to.send(envl);
@@ -122,14 +123,11 @@ Just try:
 
         if (back) |val| {
             // Expected value == index [0-5]
-            try testing.expect(val.*.letter == indx);
+            try testing.expect(val.letter == indx);
         } else |_| {
             try testing.expect(false);
         }
     }
-
-    // Stop Echo
-    try echo.stop();
 ```
 
 ## Boring details
@@ -140,7 +138,7 @@ const Rumors = MailBox([]const u8);
 const rmrsMbx : Rumors = .{};
 ```
 
-**Envelope** is wrapper of actual user defined type **Letter**.
+**Envelope** is a wrapper of actual user defined type **Letter**.
 ```zig
         pub const Envelope = struct {
             prev: ?*Envelope = null,
@@ -148,7 +146,7 @@ const rmrsMbx : Rumors = .{};
             letter: Letter,
         };
 ```
-In fact Mailbox is queue(FIFO) of Envelope(s).
+In fact Mailbox is a queue(FIFO) of Envelope(s).
 
 MailBox supports following operations:
 - send *Envelope* to MailBox (*enqueue*) and wakeup waiting receiver(s)
