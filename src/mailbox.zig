@@ -95,13 +95,11 @@ pub fn MailBox(comptime Letter: type) type {
 
         /// First close disabled further client calls and returns head of Envelopes
         /// for de-allocation
-        pub fn close(mbox: *Self) error{Closed}!?*Envelope {
+        pub fn close(mbox: *Self) ?*Envelope {
             mbox.mutex.lock();
             defer mbox.mutex.unlock();
 
-            if (mbox.closed) {
-                return error.Closed;
-            }
+            if (mbox.closed) return null;
 
             mbox.closed = true;
 
@@ -194,7 +192,7 @@ test "basic MailBox test" {
 
     try testing.expectError(error.Timeout, mbox.receive(10));
 
-    _ = try mbox.close();
+    _ = mbox.close();
     try testing.expectError(error.Closed, mbox.receive(10));
 }
 //-----------------------------
@@ -247,8 +245,8 @@ test "Echo mailboxes test" {
         // As result Echo should stop processing
         // and exit from the thread.
         pub fn stop(echo: *Self) !void {
-            _ = try echo.to.close();
-            _ = try echo.from.close();
+            _ = echo.to.close();
+            _ = echo.from.close();
         }
     };
 
