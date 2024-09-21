@@ -1,6 +1,6 @@
 ![](_logo/mailboxes.png)
 
-# Mailbox - the best way for inter-thread communication.          
+# Mailbox - old new way of inter-thread communication.          
 
 [![CI](https://github.com/g41797/yazq/actions/workflows/ci.yml/badge.svg)](https://github.com/g41797/yazq/actions/workflows/ci.yml)
 
@@ -33,6 +33,7 @@ But in the real multithreaded application, threads communicate with each other a
 members of work team.
 
 **Mailbox** provides convenient and simple communication mechanism.
+ 
 Just try:
 - without it
 - with it
@@ -150,14 +151,13 @@ const rmrsMbx : Rumors = .{};
 In fact Mailbox is queue(FIFO) of Envelope(s).
 
 MailBox supports following operations:
-- send *Envelope* to MailBox (*enqueue*) and wakeup waiting receivers
+- send *Envelope* to MailBox (*enqueue*) and wakeup waiting receiver(s)
 - receive *Envelope* from Mailbox (*dequeue*) with time-out
 - close Mailbox:
   - disables further operations
   - first close returns List of non-processed *Envelope(s)* for free/reuse etc.
 
 Feel free to suggest improvements in doc and code.
-
 
 
 ## License
