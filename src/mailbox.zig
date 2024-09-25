@@ -2,14 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 const std = @import("std");
-const builtin = @import("builtin");
-const debug = std.debug;
-const assert = debug.assert;
-const testing = std.testing;
-
 const Mutex = std.Thread.Mutex;
 const Condition = std.Thread.Condition;
-const Thread = std.Thread;
 
 pub fn MailBox(comptime Letter: type) type {
     return struct {
