@@ -1,4 +1,4 @@
-    ![](_logo/mailboxes.png)
+![](_logo/mailboxes.png)
 
 # Mailbox - old new way of inter-thread communication.          
 
