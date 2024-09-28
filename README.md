@@ -1,4 +1,4 @@
-![](_logo/mailboxes.png)
+    ![](_logo/mailboxes.png)
 
 # Mailbox - old new way of inter-thread communication.          
 
@@ -41,7 +41,7 @@ Just try:
 ## Example of usage - 'Echo' 
 ```zig
     // Mbx is Mailbox with usize letter(data)
-    const Mbx = MailBox(usize);
+    const Mbx = mailbox.MailBox(usize);
 
     // Echo - runs on own thread
     // It has two mailboxes
@@ -134,7 +134,7 @@ Just try:
 
 Mailbox of *[]const u8* 'Letters':
 ```zig
-const Rumors = MailBox([]const u8);
+const Rumors = mailbox.MailBox([]const u8);
 const rmrsMbx : Rumors = .{};
 ```
 
@@ -162,17 +162,50 @@ Feel free to suggest improvements in doc and code.
 [MIT](LICENSE)
 
 ## Installation
-You finally got to installation:
-- add dependency to build.zig.zon
+You finally got to installation!
+
+### Submodules
+
+Create folder *'deps'* under *'src'* and mailbox submodule:  
 ```bash
-zig fetch --save-exact  https://github.com/g41797/mailbox/archive/master.tar.gz
+mkdif src/deps        
+git submodule add https://github.com/g41797/mailbox src/deps/mailbox
 ```
-- add to build.zig:
+Import mailbox:
+```zig
+const mailbox = @import("deps/mailbox/src/mailbox.zig");
+```
+Use mailbox:
+```zig
+const MsgBlock = struct {
+    len: usize = undefined,
+    buff: [1024]u8 = undefined,
+};
+
+const Msgs = mailbox.MailBox(MsgBlock);
+
+var msgs: Msgs = .{};
+...................
+_ = msgs.close();
+```
+
+Periodically update submodule(s):
+```bash
+git submodule update --remote
+```
+
+### Package Manager
+
 ```zig
 exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
 ```
 
-**Stop reading and start playing!**
+Zig Package Manager was changed and old installation instructions are based on addModule (see above)
+are wrong - [What happened to addModule?](https://ziggit.dev/t/what-happened-to-addmodule/2908)
+
+I'll add installation via package manager later, after testing.
+
+Opened new issue [Fix installation instructions](https://github.com/g41797/mailbox/issues/2)
 
 ## Last warning
 First rule of multithreading:
