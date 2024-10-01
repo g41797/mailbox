@@ -196,16 +196,50 @@ git submodule update --remote
 
 ### Package Manager
 
-```zig
-exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
+With an existing Zig project, adding Mailbox to it is easy:
+
+1. Add mailbox to your `build.zig.zon`
+2. Add mailbox to your `build.zig`
+
+To add mailbox to `build.zig.zon` simply run the following in your terminal:
+
+```sh
+cd my-example-project
+zig fetch --save=mailbox git+https://github.com/g41797/mailbox
 ```
 
-Zig Package Manager was changed and old installation instructions are based on addModule (see above)
-are wrong - [What happened to addModule?](https://ziggit.dev/t/what-happened-to-addmodule/2908)
+and in your `build.zig.zon` you should find a new dependency like:
 
-I'll add installation via package manager later, after testing.
+```zig
+.{
+    .name = "My example project",
+    .version = "0.0.1",
 
-Opened new issue [Fix installation instructions](https://github.com/g41797/mailbox/issues/2)
+    .dependencies = .{
+        .mailbox = .{
+            .url = "git+https://github.com/g41797/mailbox#3f794f34f5d859e7090c608da998f3b8856f8329",
+            .hash = "122068e7811ec1bfc2a81c9250078dd5dafa9dca4eb3f1910191ba060585526f03fe",
+        },
+    },
+    .paths = .{
+        "",
+    },
+}
+```
+
+Then, in your `build.zig`'s `build` function, add the following before
+`b.installArtifact(exe)`:
+
+```zig
+    const mailbox = b.dependency("mailbox", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    exe.root_module.addImport("mailbox", mailbox.module("mailbox"));
+```
+
+From then on, you can use the Mailbox package in your project.
 
 ## Last warning
 First rule of multithreading:

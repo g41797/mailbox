@@ -24,11 +24,16 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    _ = b.addModule("mailbox", .{
+        .root_source_file = b.path("src/mailbox.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
     // running `zig build`).
     b.installArtifact(lib);
-
 
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
