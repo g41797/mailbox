@@ -11,7 +11,7 @@ Mailboxes are one of the fundamental parts of the [actor model originated in **1
 > Through the mailbox mechanism, actors can decouple the reception of a message from its elaboration.
 > A mailbox is nothing more than the data structure (FIFO) that holds messages.
 
-I first encountered MailBox in the late 80s while working om a real-time system: 
+I first encountered MailBox in the late 80s while working on a real-time system: 
 > "A **mailbox** is object that can be used for inter-task
 communication. When task A wants to send an object to task B, task A
 must send the object to the mailbox, and task B must visit the mailbox,
@@ -20,23 +20,31 @@ desired length of time*..."
 > **iRMX 86™ NUCLEUS REFERENCE MANUAL** _Copyright @ 1980, 1981 Intel Corporation.
 
 Since than I have used it in:
-- iRMX      - *PL/M-86*
-- AIX       - *C*
-- Windows   - *C++/C#*
-- Linux     - *Golang*
 
-**Now it's Zig time**
+|     OS      | Language(s) |
+|:-----------:|:-----------:|
+|    iRMX     |  *PL/M-86*  |
+|     AIX     |     *C*     |
+|   Windows   |  *C++/C#*   |
+|    Linux    |    *Go*     |
+
+**Now it's Zig time!!!**
 
 ## Why?
 If your thread runs in "Fire and Forget" mode, you don't need Mailbox.
+ 
 But in real multithreaded applications, threads communicate with each other as
 members of a work team.
 
-**Mailbox** provides a convenient and simple communication mechanism.
- 
-Just try:
-- without it
-- with it
+**Mailbox** provides a convenient and simple inter-thread communication:
+- thread safe
+- asynchronous
+- non-blocking 
+- cancelable
+- no own allocations
+- unbounded
+- fan-out/fan-in
+  
 
 ## Example of usage - 'Echo' 
 ```zig
