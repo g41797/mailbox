@@ -1,0 +1,4 @@
+Copyright © 2024 JetBrains s.r.o. CLion and the CLion logo are trademarks of JetBrains s.r.o.
+
+https://www.jetbrains.com/company/brand/#logos-and-icons
+
