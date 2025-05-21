@@ -24,4 +24,4 @@ jobs:
           version: master
           cache: false
 
-      - run: zig test src/mailbox_tests.zig
+      - run: zig build test -freference-trace --summary all
