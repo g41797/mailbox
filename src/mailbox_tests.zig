@@ -1,11 +1,6 @@
 // Copyright (c) 2024 g41797
 // SPDX-License-Identifier: MIT
 
-const std = @import("std");
-const testing = std.testing;
-const Thread = std.Thread;
-const mailbox = @import("mailbox.zig");
-
 //-----------------------------
 test {
     @import("std").testing.refAllDecls(@This());
@@ -33,6 +28,9 @@ test "basic MailBox test" {
 
     try testing.expect(mbox.letters() == 5);
 
+    try mbox.interrupt();
+    try testing.expectError(error.Interrupted, mbox.receive(10));
+
     for (1..6) |i| {
         const recv = mbox.receive(1000);
 
@@ -45,6 +43,7 @@ test "basic MailBox test" {
 
     try testing.expectError(error.Timeout, mbox.receive(10));
 
+    try mbox.interrupt();
     _ = mbox.close();
     try testing.expectError(error.Closed, mbox.receive(10));
 }
@@ -84,7 +83,7 @@ test "Echo mailboxes test" {
                 // Receive - exit from the thread if mailbox was closed
                 const envelope = echo.to.receive(100000000) catch break;
                 // Reply to the client
-                // Exit from the thread if mailbox was closed
+                // Exit from the thread if mailbox was closed or interrupted
                 _ = echo.from.send(envelope) catch break;
             }
         }
@@ -151,3 +150,23 @@ test "Echo mailboxes test" {
 //          std.testing.allocator.destroy(echo);
 //          std.testing.allocator.destroy(envl);
 //-----------------------------
+
+test "compilation MailBoxIntrusive test" {
+    const Mbx = mailbox.MailBoxIntrusive(MsgU32);
+    var mbox: Mbx = .{};
+    try testing.expectError(error.Timeout, mbox.receive(10));
+
+    try mbox.interrupt();
+    try testing.expectError(error.Interrupted, mbox.receive(10));
+}
+
+const MsgU32 = struct {
+    prev: ?*MsgU32 = null,
+    next: ?*MsgU32 = null,
+    stuff: u32 = undefined,
+};
+
+const std = @import("std");
+const testing = std.testing;
+const Thread = std.Thread;
+const mailbox = @import("mailbox.zig");
