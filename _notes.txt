@@ -91,3 +91,9 @@ Install
 
     build.zig:
         exe.addModule("mailbox", b.dependency("mailbox", .{}).module("mailbox"));
+
+What does it mean for a data structure to be "intrusive"?
+    https://stackoverflow.com/questions/5004162/what-does-it-mean-for-a-data-structure-to-be-intrusive
+
+Intrusive queue
+    https://github.com/mitchellh/libxev/blob/main/src/queue.zig

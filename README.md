@@ -163,50 +163,47 @@ In fact Mailbox is a queue(FIFO) of Envelope(s).
 MailBox supports following operations:
 - send *Envelope* to MailBox (*enqueue*) and wakeup waiting receiver(s)
 - receive *Envelope* from Mailbox (*dequeue*) with time-out
+- interrupt - wake-up receiver thread
 - close Mailbox:
   - disables further operations
   - first close returns List of non-processed *Envelope(s)* for free/reuse etc.
 
-Feel free to suggest improvements in doc and code.
+## Intrusive mailbox
+
+In order to be intrusive, Envelope should looks like
+
+```zig
+  pub const T = struct {
+       prev: ?*T = null,
+       next: ?*T = null,
+       additional stuff
+  };
+```
+Dumb example:
+```zig
+  const MsgU32 = struct {
+      prev: ?*MsgU32 = null,
+      next: ?*MsgU32 = null,
+      stuff: u32 = undefined,
+  };
+```
+
+_MailBoxIntrusive_ has exactly the same functionality as former _MailBox_.
+
+For curious:
+  - [What does it mean for a data structure to be "intrusive"?](https://stackoverflow.com/questions/5004162/what-does-it-mean-for-a-data-structure-to-be-intrusive)
+  - [libxev intrusive queue](https://github.com/mitchellh/libxev/blob/main/src/queue.zig#L4)
 
 
-## License
-[MIT](LICENSE)
+## Eat your own dog food  
+
+I am using _MailBox_ in own projects:
+- [multithreaded tests](https://github.com/g41797/syslog/blob/main/src/syslog_tests.zig)
+- [message pool](https://github.com/g41797/nats/blob/main/src/messages.zig#L222)
+
 
 ## Installation
 You finally got to installation!
-
-### Submodules
-
-Create folder *'deps'* under *'src'* and mailbox submodule:  
-```bash
-mkdif src/deps        
-git submodule add https://github.com/g41797/mailbox src/deps/mailbox
-```
-Import mailbox:
-```zig
-const mailbox = @import("deps/mailbox/src/mailbox.zig");
-```
-Use mailbox:
-```zig
-const MsgBlock = struct {
-    len: usize = undefined,
-    buff: [1024]u8 = undefined,
-};
-
-const Msgs = mailbox.MailBox(MsgBlock);
-
-var msgs: Msgs = .{};
-...................
-_ = msgs.close();
-```
-
-Periodically update submodule(s):
-```bash
-git submodule update --remote
-```
-
-### Package Manager
 
 With an existing Zig project, adding Mailbox to it is easy:
 
@@ -250,8 +247,12 @@ Then, in your `build.zig`'s `build` function, add the following before
 
     exe.root_module.addImport("mailbox", mailbox.module("mailbox"));
 ```
-
 From then on, you can use the Mailbox package in your project.
+
+See [build.zig of the real project](https://github.com/g41797/nats/blob/main/build.zig)
+
+## License
+[MIT](LICENSE)
 
 ## Last warning
 First rule of multithreading:
