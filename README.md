@@ -43,7 +43,6 @@ members of a work team.
 **Mailbox** provides a convenient and simple inter-thread communication:
 - thread safe
 - asynchronous
-- non-blocking 
 - cancelable
 - no own allocations
 - unbounded
