@@ -19,9 +19,9 @@ jobs:
         with:
           submodules: true
 
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v2
         with:
-          version: master
-          cache: false
+          version: 0.14.1
+          use-cache: false
 
       - run: zig build test -freference-trace --summary all
