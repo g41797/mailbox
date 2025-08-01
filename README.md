@@ -160,13 +160,15 @@ const rmrsMbx : Rumors = .{};
 ```
 In fact Mailbox is a queue(FIFO) of Envelope(s).
 
+## APIs
+
 MailBox supports following operations:
-- send *Envelope* to MailBox (*enqueue*) and wakeup waiting receiver(s)
-- receive *Envelope* from Mailbox (*dequeue*) with time-out
-- interrupt - wake-up receiver thread
-- close Mailbox:
+- **send** *Envelope* to MailBox (*enqueue*) and wakeup waiting receiver(s)
+- **receive** *Envelope* from Mailbox (*dequeue*) with time-out
+- **interrupt** - wake-up receiver thread
+- **close** Mailbox:
   - disables further operations
-  - first close returns List of non-processed *Envelope(s)* for free/reuse etc.
+  - _first_ close returns List of non-processed *Envelope(s)* for free/reuse etc.
 
 ## Intrusive mailbox
 
