@@ -23,7 +23,7 @@ where, if an object isn't there, it has the option of *waiting for any
 desired length of time*..." 
 > **iRMX 86™ NUCLEUS REFERENCE MANUAL** _Copyright @ 1980, 1981 Intel Corporation.
 
-Since than I have used it in:
+Since then, I have used it in:
 
 |     OS      | Language(s) |
 |:-----------:|:-----------:|
@@ -171,7 +171,7 @@ MailBox supports following operations:
 
 ## Intrusive mailbox
 
-In order to be intrusive, Envelope should looks like
+In order to be intrusive, Envelope should look like
 
 ```zig
   pub const T = struct {
@@ -195,6 +195,43 @@ For curious:
   - [What does it mean for a data structure to be "intrusive"?](https://stackoverflow.com/questions/5004162/what-does-it-mean-for-a-data-structure-to-be-intrusive)
   - [libxev intrusive queue](https://github.com/mitchellh/libxev/blob/main/src/queue.zig#L4)
 
+## TypeErased Mailbox
+
+**TypeErased Mailbox** is an _intrusive_ mailbox that does **not know the message type**.
+
+This implementation relies on [De-Genericify Linked Lists](https://ziglang.org/download/0.15.1/release-notes.html#De-Genericify-Linked-Lists) introduced in Zig 0.15.1.  
+
+In order to work with **_TypeErased Mailbox_** each message must embed a linked list node:
+```zig
+const Msg = struct {
+  <your data>
+  node: std.DoublyLinkedList.Node,
+};
+```
+
+Example:
+```zig
+    const Node = std.DoublyLinkedList.Node;
+    const Mbx = mailbox.TypeErasedMailbox;
+
+    // Message envelope (intrusive)
+    const Msg = struct {
+        value: usize = 0,
+        node: Node = .{},
+    };
+
+    var mbox: Mbx = .{};
+
+    var msg: Msg = .{
+        .value = 1,
+    };
+
+    try mbox.send(&msg.node);
+
+    const node: *Node = try mbox.receive(1000);
+    const rcvdMsg: *Msg = @fieldParentPtr("node", node);
+    var shouldBeOne: usize = rcvdMsg.*.value;
+```
 
 ## Eat your own dog food  
 
@@ -211,10 +248,9 @@ With an existing Zig project, adding Mailbox to it is easy:
 1. Add mailbox to your `build.zig.zon`
 2. Add mailbox to your `build.zig`
 
-To add mailbox to `build.zig.zon` simply run the following in your terminal:
+To add mailbox to `build.zig.zon` simply run the following from your project root:
 
 ```sh
-cd my-example-project
 zig fetch --save=mailbox git+https://github.com/g41797/mailbox
 ```
 
@@ -222,9 +258,6 @@ and in your `build.zig.zon` you should find a new dependency like:
 
 ```zig
 .{
-    .name = "My example project",
-    .version = "0.0.1",
-
     .dependencies = .{
         .mailbox = .{
             .url = "git+https://github.com/g41797/mailbox#3f794f34f5d859e7090c608da998f3b8856f8329",
@@ -237,6 +270,12 @@ and in your `build.zig.zon` you should find a new dependency like:
 }
 ```
 
+**NOTE**: If you still need version for zig 0.14.1 , run
+```sh
+zig fetch --save https://github.com/g41797/mailbox/archive/refs/tags/v0.0.12.tar.gz
+```
+
+
 Then, in your `build.zig`'s `build` function, add the following before
 `b.installArtifact(exe)`:
 
@@ -248,9 +287,11 @@ Then, in your `build.zig`'s `build` function, add the following before
 
     exe.root_module.addImport("mailbox", mailbox.module("mailbox"));
 ```
-From then on, you can use the Mailbox package in your project.
+From then on, you can use the Mailbox package in your code:
+```zig
+    const mailbox = @import("mailbox");
+```
 
-See [build.zig of the real project](https://github.com/g41797/nats/blob/main/build.zig)
 
 ## License
 [MIT](LICENSE)
