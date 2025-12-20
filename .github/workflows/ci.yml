@@ -25,3 +25,9 @@ jobs:
           use-cache: false
 
       - run: zig build test -freference-trace --summary all
+
+      - run: zig build test -freference-trace --summary all -Doptimize=ReleaseSafe
+
+      - run: zig build test -freference-trace --summary all -Doptimize=ReleaseSmall
+
+      - run: zig build test -freference-trace --summary all -Doptimize=ReleaseFast

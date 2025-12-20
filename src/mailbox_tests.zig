@@ -1,4 +1,4 @@
-// Copyright (c) 2024 g41797
+// SPDX-FileCopyrightText: Copyright (c) 2025 g41797
 // SPDX-License-Identifier: MIT
 
 //-----------------------------
@@ -143,13 +143,6 @@ test "Echo mailboxes test" {
     // Stop Echo
     try echo.stop();
 }
-//  defered:
-//      Wait finish of Echo
-//          echo.waitFinish();
-//      Free allocated memory:
-//          std.testing.allocator.destroy(echo);
-//          std.testing.allocator.destroy(envl);
-//-----------------------------
 
 test "compilation MailBoxIntrusive test" {
     const Mbx = mailbox.MailBoxIntrusive(MsgU32);
@@ -165,6 +158,148 @@ const MsgU32 = struct {
     next: ?*MsgU32 = null,
     stuff: u32 = undefined,
 };
+
+//-----------------------------
+test "basic TypeErased test" {
+    const Node = std.DoublyLinkedList.Node;
+    const Mbx = mailbox.TypeErasedMailbox;
+
+    // Message envelope (intrusive)
+    const Msg = struct {
+        value: usize = 0,
+        node: Node = .{},
+    };
+
+    var mbox: Mbx = .{};
+
+    try testing.expectError(error.Timeout, mbox.receive(1000));
+
+    var one: Msg = .{
+        .value = 1,
+    };
+    var two: Msg = .{
+        .value = 2,
+    };
+    var three: Msg = .{
+        .value = 3,
+    };
+    var four: Msg = .{
+        .value = 4,
+    };
+    var five: Msg = .{
+        .value = 5,
+    };
+
+    try mbox.send(&one.node);
+    try mbox.send(&two.node);
+    try mbox.send(&three.node);
+    try mbox.send(&four.node);
+    try mbox.send(&five.node);
+
+    try testing.expect(mbox.letters() == 5);
+
+    try mbox.interrupt();
+    try testing.expectError(error.Interrupted, mbox.receive(10));
+
+    for (1..6) |i| {
+        const recv = mbox.receive(1000);
+
+        if (recv) |node| {
+            const rcvd: *Msg = @fieldParentPtr("node", node);
+            try testing.expect(rcvd.*.value == i);
+        } else |_| {
+            try testing.expect(false);
+        }
+    }
+
+    try testing.expectError(error.Timeout, mbox.receive(10));
+
+    try mbox.interrupt();
+    _ = mbox.close();
+    try testing.expectError(error.Closed, mbox.receive(10));
+}
+//-----------------------------
+
+test "Echo TypeErased mailboxes test" {
+    const Node = std.DoublyLinkedList.Node;
+    const Mailbox = mailbox.TypeErasedMailbox;
+
+    // Message envelope (intrusive)
+    const Msg = struct {
+        value: usize = 0,
+        node: Node = .{},
+    };
+
+    // Echo worker (runs on its own thread)
+    const Echo = struct {
+        const Self = @This();
+
+        to: Mailbox = .{},
+        from: Mailbox = .{},
+        thread: Thread = undefined,
+
+        pub fn start(self: *Self) void {
+            self.thread = std.Thread.spawn(.{}, run, .{self}) catch unreachable;
+        }
+
+        fn run(self: *Self) void {
+            while (true) {
+                // Receive from TO mailbox
+                const node = self.to.receive(100_000_000) catch break;
+
+                // Echo back to FROM mailbox
+                _ = self.from.send(node) catch break;
+            }
+        }
+
+        pub fn stop(self: *Self) void {
+            _ = self.to.close();
+            _ = self.from.close();
+        }
+
+        pub fn waitFinish(self: *Self) void {
+            self.thread.join();
+        }
+    };
+
+    var echo: *Echo = try std.testing.allocator.create(Echo);
+    echo.* = .{};
+    defer {
+        echo.waitFinish();
+        std.testing.allocator.destroy(echo);
+    }
+
+    echo.start();
+
+    // Nothing sent → nothing received
+    try testing.expectEqual(0, echo.from.list.len());
+    try testing.expectError(error.Timeout, echo.from.receive(100));
+
+    // Send / receive loop
+    for (0..6) |i| {
+        const msg = try std.testing.allocator.create(Msg);
+        msg.* = .{};
+
+        defer std.testing.allocator.destroy(msg);
+
+        msg.*.value = i;
+
+        // Send to TO mailbox
+        try echo.to.send(&msg.node);
+
+        // Receive echoed message
+        const node = echo.from.receive(1_000_000) catch {
+            try testing.expect(false);
+            continue;
+        };
+
+        const back: *Msg = @fieldParentPtr("node", node);
+        try testing.expect(back.*.value == i);
+    }
+
+    // Stop echo thread
+    echo.stop();
+}
 
 const std = @import("std");
 const testing = std.testing;

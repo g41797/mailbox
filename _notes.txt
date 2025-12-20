@@ -97,3 +97,9 @@ What does it mean for a data structure to be "intrusive"?
 
 Intrusive queue
     https://github.com/mitchellh/libxev/blob/main/src/queue.zig
+
+Zig's new LinkedList API
+    https://www.openmymind.net/Zigs-New-LinkedList-API/
+
+New LinkedList API footgun
+    https://ziggit.dev/t/new-linkedlist-api-footgun

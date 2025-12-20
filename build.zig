@@ -42,6 +42,8 @@ pub fn build(b: *std.Build) void {
         .root_module = tmod,
     });
 
+    b.installArtifact(lib_unit_tests);
+
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
     // Similar to creating the run step earlier, this exposes a `test` step to

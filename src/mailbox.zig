@@ -1,4 +1,4 @@
-// Copyright (c) 2025 g41797
+// SPDX-FileCopyrightText: Copyright (c) 2025 g41797
 // SPDX-License-Identifier: MIT
 
 pub fn MailBox(comptime Letter: type) type {
@@ -347,6 +347,134 @@ pub fn MailBoxIntrusive(comptime Envelope: type) type {
         }
     };
 }
+
+/// Intrusive, type-erased mailbox based on std.DoublyLinkedList.
+/// The stored objects must embed `std.DoublyLinkedList.Node`.
+/// const Envelope = struct {
+///     // user data
+///     node: std.DoublyLinkedList.Node,
+/// };
+pub const TypeErasedMailbox = struct {
+    const Self = @This();
+
+    pub const Node = std.DoublyLinkedList.Node;
+    pub const List = std.DoublyLinkedList;
+
+    list: List = .{
+        .first = null,
+        .last = null,
+    },
+
+    len: usize = 0, // tracking the length separately according to recommendation
+    closed: bool = false,
+    interrupted: bool = false,
+
+    mutex: Mutex = .{},
+    cond: Condition = .{},
+
+    /// Append a node to the tail of the mailbox.
+    /// Fails if mailbox is closed.
+    pub fn send(mbox: *Self, node: *Node) error{Closed}!void {
+        mbox.mutex.lock();
+        defer mbox.mutex.unlock();
+
+        if (mbox.closed)
+            return error.Closed;
+
+        mbox.list.append(node);
+        mbox.len += 1;
+
+        mbox.cond.signal();
+    }
+
+    /// Interrupt a waiting receiver.
+    pub fn interrupt(mbox: *Self) error{ Closed, AlreadyInterrupted }!void {
+        mbox.mutex.lock();
+        defer mbox.mutex.unlock();
+
+        if (mbox.closed)
+            return error.Closed;
+
+        if (mbox.interrupted)
+            return error.AlreadyInterrupted;
+
+        mbox.interrupted = true;
+        mbox.cond.signal();
+    }
+
+    /// Receive a node from the head of the mailbox.
+    /// Blocks up to `timeout_ns`.
+    pub fn receive(
+        mbox: *Self,
+        timeout_ns: u64,
+    ) error{ Timeout, Closed, Interrupted }!*Node {
+        var timer = std.time.Timer.start() catch unreachable;
+
+        mbox.mutex.lock();
+        defer mbox.mutex.unlock();
+
+        while (mbox.len == 0) {
+            if (mbox.closed)
+                return error.Closed;
+
+            if (mbox.interrupted) {
+                mbox.interrupted = false;
+                return error.Interrupted;
+            }
+
+            const elapsed = timer.read();
+            if (elapsed >= timeout_ns)
+                return error.Timeout;
+
+            try mbox.cond.timedWait(
+                &mbox.mutex,
+                timeout_ns - elapsed,
+            );
+        }
+
+        if (mbox.closed) {
+            return error.Closed;
+        }
+
+        if (mbox.interrupted) {
+            mbox.interrupted = false;
+            return error.Interrupted;
+        }
+
+        const node = mbox.list.popFirst().?;
+        mbox.len -= 1;
+
+        mbox.cond.signal();
+        return node;
+    }
+
+    /// Number of queued items.
+    pub fn letters(mbox: *Self) usize {
+        mbox.mutex.lock();
+        defer mbox.mutex.unlock();
+        return mbox.len;
+    }
+
+    /// Close mailbox.
+    /// Returns the head node of the remaining list (caller cleans).
+    pub fn close(mbox: *Self) ?*Node {
+        mbox.mutex.lock();
+        defer mbox.mutex.unlock();
+
+        if (mbox.closed)
+            return null;
+
+        mbox.closed = true;
+        mbox.interrupted = false;
+
+        const head = mbox.list.first;
+        mbox.list = .{};
+        mbox.len = 0;
+
+        mbox.cond.signal();
+        return head;
+    }
+};
 
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
