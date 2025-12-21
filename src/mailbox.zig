@@ -139,6 +139,12 @@ pub fn MailBox(comptime Letter: type) type {
             new_Envelope.prev = null;
             new_Envelope.next = null;
 
+            if (fifo.len == 0) {
+                std.debug.assert(fifo.first == null);
+                std.debug.assert(fifo.last == null);
+                fifo.first = new_Envelope;
+            }
+
             if (fifo.last) |last| {
                 last.next = new_Envelope;
                 new_Envelope.prev = last;
@@ -311,6 +317,12 @@ pub fn MailBoxIntrusive(comptime Envelope: type) type {
         fn enqueue(fifo: *Self, new_Envelope: *Envelope) void {
             new_Envelope.prev = null;
             new_Envelope.next = null;
+
+            if (fifo.len == 0) {
+                std.debug.assert(fifo.first == null);
+                std.debug.assert(fifo.last == null);
+                fifo.first = new_Envelope;
+            }
 
             if (fifo.last) |last| {
                 last.next = new_Envelope;

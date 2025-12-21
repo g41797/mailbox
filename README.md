@@ -226,12 +226,13 @@ Example:
         .value = 1,
     };
 
-    try mbox.send(&msg.node);
+    _ = try mbox.send(&msg.node);
 
     const node: *Node = try mbox.receive(1000);
     const rcvdMsg: *Msg = @fieldParentPtr("node", node);
     var shouldBeOne: usize = rcvdMsg.*.value;
 ```
+_TypeErasedMailbox_ has exactly the same functionality as former _MailBox_.
 
 ## Eat your own dog food  
 

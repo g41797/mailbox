@@ -3,7 +3,7 @@
     .name = .mailbox,
     .version = "0.0.13",
 
-    .fingerprint = 0xa69fe20b9bc5eb6b,
+    .fingerprint = 0xa69fe20bd24b00f0,
 
     .minimum_zig_version = "0.15.2",
 
