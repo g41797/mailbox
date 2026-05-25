@@ -1,11 +1,11 @@
 .{
     // This is the default name used by packages depending on this one.
     .name = .mailbox,
-    .version = "0.0.13",
+    .version = "0.0.15",
 
     .fingerprint = 0xa69fe20bd24b00f0,
 
-    .minimum_zig_version = "0.15.2",
+    .minimum_zig_version = "0.16.0",
 
     .dependencies = .{},
 

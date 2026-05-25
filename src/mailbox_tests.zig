@@ -10,7 +10,7 @@ test {
 //-----------------------------
 test "basic MailBox test" {
     const Mbx = mailbox.MailBox(u32);
-    var mbox: Mbx = .{};
+    var mbox: Mbx = .init(io);
 
     try testing.expectError(error.Timeout, mbox.receive(10));
 
@@ -71,8 +71,8 @@ test "Echo mailboxes test" {
         // Pay attention, that client code does not use
         // any thread "API" - all embedded within Echo
         pub fn start(echo: *Self) void {
-            echo.to = .{};
-            echo.from = .{};
+            echo.to = .init(io);
+            echo.from = .init(io);
             echo.thread = std.Thread.spawn(.{}, run, .{echo}) catch unreachable;
         }
 
@@ -146,7 +146,7 @@ test "Echo mailboxes test" {
 
 test "compilation MailBoxIntrusive test" {
     const Mbx = mailbox.MailBoxIntrusive(MsgU32);
-    var mbox: Mbx = .{};
+    var mbox: Mbx = .init(io);
     try testing.expectError(error.Timeout, mbox.receive(10));
 
     try mbox.interrupt();
@@ -170,7 +170,7 @@ test "basic TypeErased test" {
         node: Node = .{},
     };
 
-    var mbox: Mbx = .{};
+    var mbox: Mbx = .init(io);
 
     try testing.expectError(error.Timeout, mbox.receive(1000));
 
@@ -234,8 +234,8 @@ test "Echo TypeErased mailboxes test" {
     const Echo = struct {
         const Self = @This();
 
-        to: Mailbox = .{},
-        from: Mailbox = .{},
+        to: Mailbox = .init(io),
+        from: Mailbox = .init(io),
         thread: Thread = undefined,
 
         pub fn start(self: *Self) void {
@@ -305,3 +305,4 @@ const std = @import("std");
 const testing = std.testing;
 const Thread = std.Thread;
 const mailbox = @import("mailbox.zig");
+const io = std.testing.io;
