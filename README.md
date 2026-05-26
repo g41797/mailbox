@@ -43,7 +43,7 @@ members of a work team.
 **Mailbox** provides a convenient and simple inter-thread communication:
 - thread safe
 - asynchronous
-- cancelable
+- interruptable
 - no own allocations
 - unbounded
 - fan-out/fan-in
@@ -69,9 +69,9 @@ members of a work team.
         // Mailboxes creation and start of the thread
         // Pay attention, that client code does not use
         // any thread "API" - all embedded within Echo
-        pub fn start(echo: *Self) void {
-            echo.to = .{};
-            echo.from = .{};
+        pub fn start(echo: *Self, io: Io) void {
+            echo.to = .init(io);
+            echo.from = .init(io);
             echo.thread = std.Thread.spawn(.{}, run, .{echo}) catch unreachable;
         }
 
@@ -104,7 +104,7 @@ members of a work team.
     var echo = try std.testing.allocator.create(Echo);
 
     // Start Echo(on own thread)
-    echo.start();
+    echo.start(std.testing.io);
     defer echo.stop();
 
     defer {
@@ -146,7 +146,7 @@ members of a work team.
 Mailbox of *[]const u8* 'Letters':
 ```zig
 const Rumors = mailbox.MailBox([]const u8);
-const rmrsMbx : Rumors = .{};
+const rmrsMbx : Rumors = .init(io);
 ```
 
 **Envelope** is a wrapper of actual user defined type **Letter**.
@@ -220,7 +220,7 @@ Example:
         node: Node = .{},
     };
 
-    var mbox: Mbx = .{};
+    var mbox: Mbx = .init(io);
 
     var msg: Msg = .{
         .value = 1,
@@ -239,41 +239,20 @@ _TypeErasedMailbox_ has exactly the same functionality as former _MailBox_.
 I am using _MailBox_ in own projects:
 - [multithreaded tests](https://github.com/g41797/syslog/blob/main/src/syslog_tests.zig)
 - [message pool](https://github.com/g41797/nats/blob/main/src/messages.zig#L222)
+- [itc](https://github.com/g41797/tofu)
 
 
 ## Installation
-You finally got to installation!
 
 With an existing Zig project, adding Mailbox to it is easy:
 
 1. Add mailbox to your `build.zig.zon`
 2. Add mailbox to your `build.zig`
 
-To add mailbox to `build.zig.zon` simply run the following from your project root:
+To add mailbox to `build.zig.zon` run the following from your project root:
 
 ```sh
 zig fetch --save=mailbox git+https://github.com/g41797/mailbox
-```
-
-and in your `build.zig.zon` you should find a new dependency like:
-
-```zig
-.{
-    .dependencies = .{
-        .mailbox = .{
-            .url = "git+https://github.com/g41797/mailbox#3f794f34f5d859e7090c608da998f3b8856f8329",
-            .hash = "122068e7811ec1bfc2a81c9250078dd5dafa9dca4eb3f1910191ba060585526f03fe",
-        },
-    },
-    .paths = .{
-        "",
-    },
-}
-```
-
-**NOTE**: If you still need version for zig 0.14.1 , run
-```sh
-zig fetch --save https://github.com/g41797/mailbox/archive/refs/tags/v0.0.12.tar.gz
 ```
 
 
